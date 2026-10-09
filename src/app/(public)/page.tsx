@@ -1,8 +1,54 @@
-export default function HomePage() {
+import { prisma } from "@/lib/prisma"
+import { ProductCard } from "@/components/public/product-card"
+import { Input } from "@/components/ui/input"
+import { Search } from "lucide-react"
+
+type Props = {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function HomePage({ searchParams }: Props) {
+  const { q } = await searchParams
+
+  const products = await prisma.product.findMany({
+    where: {
+      status: "ACTIVE",
+      ...(q && {
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { tags: { has: q } },
+        ],
+      }),
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
-      <h1 className="text-3xl font-semibold mb-2">Katalog Produk</h1>
-      <p className="text-muted-foreground">Produk akan tampil di sini.</p>
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-semibold">Katalog Produk</h1>
+        <form className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            name="q"
+            defaultValue={q}
+            placeholder="Cari produk..."
+            className="pl-9"
+          />
+        </form>
+      </div>
+
+      {products.length === 0 ? (
+        <div className="py-20 text-center text-muted-foreground">
+          {q ? `Tidak ada produk untuk "${q}".` : "Belum ada produk."}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {products.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
