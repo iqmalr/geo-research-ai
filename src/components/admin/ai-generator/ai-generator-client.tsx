@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,8 @@ type GenerateResult = {
 
 export function AiGeneratorClient() {
   const router = useRouter()
-  const [keyword, setKeyword] = useState("")
+  const searchParams = useSearchParams()
+  const [keyword, setKeyword] = useState(searchParams.get("keyword") ?? "")
   const [productType, setProductType] = useState("")
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
