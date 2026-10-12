@@ -1,12 +1,36 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { getStoreConfig } from "@/lib/store-config"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Package, ArrowLeft } from "lucide-react"
 
 type Props = {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const [product, config] = await Promise.all([
+    prisma.product.findUnique({ where: { id } }),
+    getStoreConfig(),
+  ])
+
+  if (!product) return {}
+
+  const locationSuffix = config.city ? ` di ${config.city}` : ""
+  const title = `${product.name} | ${config.storeName}${locationSuffix}`
+  const description = product.description
+    ? `${product.description} Tersedia${locationSuffix} — ${config.storeName}.`
+    : `Beli ${product.name}${locationSuffix}. ${config.storeName} — pengiriman ke seluruh Indonesia.`
+
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+  }
 }
 
 function formatPrice(price: number) {
@@ -19,12 +43,44 @@ function formatPrice(price: number) {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params
-  const product = await prisma.product.findUnique({ where: { id } })
+  const [product, config] = await Promise.all([
+    prisma.product.findUnique({ where: { id } }),
+    getStoreConfig(),
+  ])
 
   if (!product || product.status === "INACTIVE") notFound()
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description || undefined,
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "IDR",
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "LocalBusiness",
+        name: config.storeName,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: config.city,
+          addressRegion: config.province,
+          addressCountry: "ID",
+          streetAddress: config.address,
+        },
+        telephone: config.phone,
+      },
+    },
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Button variant="ghost" size="sm" className="mb-6 -ml-2" asChild>
         <Link href="/">
           <ArrowLeft className="w-4 h-4 mr-1" />

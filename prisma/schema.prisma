@@ -22,6 +22,19 @@ model Product {
   @@map("products")
 }
 
+model StoreConfig {
+  id          String  @id @default("default")
+  storeName   String  @default("Toko Saya")
+  city        String  @default("")
+  province    String  @default("")
+  address     String  @default("")
+  phone       String  @default("")
+  description String  @default("")
+  whatsapp    String  @default("")
+
+  @@map("store_config")
+}
+
 enum Status {
   ACTIVE
   INACTIVE

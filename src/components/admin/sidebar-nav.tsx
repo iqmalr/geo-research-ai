@@ -8,6 +8,7 @@ import {
   Sparkles,
   TrendingUp,
   Search,
+  Settings,
   LogOut,
 } from "lucide-react"
 import {
@@ -29,6 +30,7 @@ const navItems = [
   { title: "AI Generator", href: "/ai-generator", icon: Sparkles },
   { title: "SEO Optimizer", href: "/seo-optimizer", icon: TrendingUp },
   { title: "Research", href: "/research", icon: Search },
+  { title: "Pengaturan", href: "/settings", icon: Settings },
 ]
 
 export function AdminSidebarNav() {
